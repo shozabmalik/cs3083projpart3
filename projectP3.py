@@ -6,25 +6,19 @@ import os
 import time
 
 app = Flask(__name__)
+IMAGES_DIR = os.path.join(os.getcwd(), "images")
+
 
 conn = pymysql.connect(host='localhost',
-                       port=8888,
+                       port = 3306,
                        user='root',
-                       password='root',
-                       db='FinstagramTableDefsDpr20',
+                       password='PanKalbi',
+                       db='DatabasesFinsta',
                        charset='utf8mb4',
-                       cursorclass=pymysql.cursors.DictCursor,
-                       autocommit=True)
+                       cursorclass=pymysql.cursors.DictCursor)
 
-@app.route('/')
-def index():
-    if ("username" in session):
-        return redirect(url_for("home"))
-    return render_template("index.html")
-
-@app.route('/login', methods=['GET'])
-def login():
-    return render_template('login.html')
+app.secret_key = 'some key that you will never guess'
+SALT = "cs3083"
 
 def login_required(par):
     @wraps(par)
@@ -34,11 +28,34 @@ def login_required(par):
         return par(*args, **kwargs)
     return d
 
+
+
+@app.route('/')
+def index():
+    if ("username" in session):
+        return redirect(url_for("home"))
+    return render_template("index.html")
+
+
+
+@app.route("/home")
+@login_required
+def home():
+    return render_template("home.html", username=session['username'])
+
+
+
+@app.route('/login', methods=['GET'])
+def login():
+    return render_template('login.html')
+
+
+
 @app.route('/register', methods=['GET'])
 def register():
     return render_template('register.html')
 
-SALT = "cs3083"
+
 
 @app.route('/loginAuth', methods=['GET', 'POST'])
 def loginAuth():
@@ -58,10 +75,10 @@ def loginAuth():
             session['username'] = username
             return redirect(url_for('home'))
         else:
-            error = 'Invalid login or username'
+            error = 'login or username is invalid'
             return render_template('login.html', error=error)
     error = "Unkown error. Try again."
-    return render_template("register.html", error=error)
+    return render_template("login.html", error=error)
 
 @app.route('/registerAuth', methods=['GET', 'POST'])
 def registerAuth():
@@ -95,14 +112,20 @@ def post():
         if (request.form["allFollowers"] == "True"):
             followers = 1
 
-        query = "INSERT INTO Photo (postingdate, filePath, allFollowers, poster) VALUES (%s, %s, %s, %s)"
+        query = "INSERT INTO Photo (postingDate, filePath, allFollowers, poster) VALUES (%s, %s, %s, %s)"
         with conn.cursor() as cursor:
             cursor.execute(query, (time.strftime('%Y-%m-%d %H:%M:%S'), path, followers, username))
         message = "Success!"
-        return render_template('upload.html', message=message)
+        return render_template('upload.html',message)
     else:
         message = "Failed. Try again."
-        return render_template('upload.html', message=message)
+        return render_template('upload.html', message)
+
+@app.route("/upload", methods=["GET"])
+@login_required
+def upload():
+    username = session["username"]
+    return render_template("upload.html", username=username)
 
 
 @app.route('/logout')
@@ -110,6 +133,23 @@ def logout():
     session.pop('username')
     return redirect('/')
 
-app.secret_key = 'some key that you will never guess'
+
+@app.route("/images", methods=["GET"])
+@login_required
+def images():
+    query = "SELECT * FROM Photo"
+    with conn.cursor() as cursor:
+        cursor.execute(query)
+    data = cursor.fetchall()
+    return render_template("images.html", images=data)
+
+@app.route("/image/<image_name>", methods=["GET"])
+def image(image_name):
+    location = os.path.join(IMAGES_DIR, image_name)
+    if os.path.isfile(location):
+        return send_file(location, mimetype="image/jpg")
+
+
+
 if __name__ == "__main__":
     app.run('127.0.0.1', 5000, debug=False)
