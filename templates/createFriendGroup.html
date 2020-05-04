@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Create Friend Group</title>
+</head>
+<body>
+	{% with messages = get_flashed_messages() %}
+	  {% if messages %}
+	    {% for message in messages %}
+	      <b>{{ message }}</b>
+	    {% endfor %}
+	  {% endif %}
+	{% endwith %}
+	<h1>Create A Friend Group</h1>
+
+        <div>
+            <form action="/createFriendGroup" method="post">
+                <input type="text" name="groupName" placeholder="Group Name" required/>
+                <br/>
+                <input type="text" name="description" placeholder="Description"/>
+                <br/>
+                <input type="submit" value="Create Group">
+            </form>
+        </div>
+        {% if message %}
+            {{ message }}
+        {% endif %}
+    <a href="/">Go back</a>
+</body>
+</html>

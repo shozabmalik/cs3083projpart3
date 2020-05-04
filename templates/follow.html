@@ -1,0 +1,19 @@
+<html>
+    <head>
+        <title>Send Follow Request</title>
+    </head>
+    <body>
+        <h1>Follow</h1>
+        <div>
+            <form action="/follow" method="post">
+                <input type="text" name="username" placeholder="Username" required/>
+                <br/>
+                <input type="submit" value="send request">
+            </form>
+        </div>
+        {% if message %}
+            {{ message }}
+        {% endif %}<br>
+    <a href="/">Go back</a>
+    </body>
+</html>

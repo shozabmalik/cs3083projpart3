@@ -1,0 +1,24 @@
+<body>
+        <h1>Your Friend Groups</h1>
+        <ul style="list-style: none;">
+        {% for group in groups %}
+            {% if group.owner_username == session["username"] %}
+            <li><label for="{{group.groupName}}">{{group.groupName}} (Owner)<input type="checkbox" value={{group.groupName}} id={{group.groupName}}></label></li>
+            <!--<label for="{{group.groupName}}">{{group.groupName}} (Owner)<input type="checkbox" value={{group.groupName}} id={{group.groupName}} name="group"></label>-->
+            <br/>
+            {% else %}
+            <li>{{group.groupName}}</li>
+            <!--<label for="{{group.groupName}}">{{group.groupName}}<input type="checkbox" value={{group.groupName}} id={{group.groupName}} name="group" style="opacity: 0;" disabled></label>-->
+            <br/>
+            {% endif %}
+        {% endfor %}
+        </ul>
+        <input type="text" id="userAdded"><input type="button" value="Add User" onClick="addUser(this)">
+        <!--<input type="text" id="userAdded"><input type="button" value="Add User" onClick="addUser(this)"><span id="errorMsg"></span>-->
+        <br/>
+        {% if message %}
+            {{ message }}
+        {% endif %}
+        <span id="resultMessage">{{ message }}</span><br/>
+        <a href="/">Go back</a>
+</body>

@@ -1,0 +1,18 @@
+<html>
+    <head>
+        <title>Search</title>
+    </head>
+    <body>
+        <h1>Search for Posts</h1>
+        <div>
+            <form action="/searchAuth" method="post">
+                <input type="text" name="username" placeholder="Username" required/>
+                <br/>
+                <input type="submit" value="Search">
+            </form>
+        </div>
+        {% if error %}
+            {{ error }}
+        {% endif %}
+    </body>
+</html>

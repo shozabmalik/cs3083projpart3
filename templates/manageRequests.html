@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Manage Follow Requests</title>
+</head>
+<body>
+	{% with messages = get_flashed_messages() %}
+	  {% if messages %}
+	    {% for message in messages %}
+	      <b>{{ message }}</b>
+	    {% endfor %}
+	  {% endif %}
+	{% endwith %}
+	{% if followers %}
+	<form action="/manageRequests" method="post" enctype="multipart/form-data">
+		<select name="chooseUsers" multiple>
+            {% for request in followers %}
+            <option value="{{request.username_follower}}">{{request.username_follower}}</option>
+            {% endfor %}
+	        </select>
+	        <br>
+	        <input type="submit" name="action" value="Accept">
+	        <input type="submit" name="action" value="Decline">
+	</form>
+	{% else %}
+	<p>You have no follow requests :(</p>
+	{% endif %}
+	<a href="/">Go back</a>
+</body>
+</html>
