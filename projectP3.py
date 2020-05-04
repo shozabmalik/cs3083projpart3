@@ -129,7 +129,7 @@ def post():
         image_name = file.filename
         path = os.path.join(IMAGES_DIR, image_name)
         file.save(path)
-        #caption = request.form["caption"]
+        caption = request.form["caption"]
         #path = savePhoto(file)
         username = session["username"]
         if (request.form["allFollowers"] == "True"):
@@ -137,7 +137,7 @@ def post():
         print('3')
         query = "INSERT INTO Photo (postingDate, filePath, allFollowers, caption, poster) VALUES (%s, %s, %s, %s, %s)"
         with conn.cursor() as cursor:
-            cursor.execute(query, (time.strftime('%Y-%m-%d %H:%M:%S'), path, followers, username))
+            cursor.execute(query, (time.strftime('%Y-%m-%d %H:%M:%S'), path, followers, caption, username))
             print('4')
         message = "Success!"
         return render_template('upload.html',message = message)
@@ -175,7 +175,7 @@ def images():
     cursor.execute(query, (username, username, username, username, username))
     data = cursor.fetchall()
     for post in data:  # post is a dictionary within a list of dictionaries for all the photos
-        query = 'SELECT username, firstName, lastName FROM Tag NATURAL JOIN Person WHERE status = 1 AND pID = %s'
+        query = 'SELECT username, firstName, lastName FROM Tag NATURAL JOIN Person WHERE pID = %s'
         cursor.execute(query, (post['pID']))
         result = cursor.fetchall()
         print('hello')
