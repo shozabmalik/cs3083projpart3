@@ -88,8 +88,8 @@ def registerAuth():
     password = request.form['password']
     newPassword = password + SALT
     checksumPassword = hashlib.sha256(newPassword.encode("utf-8")).hexdigest()
-    firstName = request.form['fname']
-    lastName = request.form['lname']
+    firstName = request.form['firstName']
+    lastName = request.form['lastName']
 
     cursor = conn.cursor()
     query = 'SELECT * FROM Person WHERE username = %s'
@@ -107,38 +107,35 @@ def registerAuth():
         return render_template('index.html')
 
 
-"""def savePhoto(form_picture):
+def savePhoto(form_picture):
     random_hex = secrets.token_hex(8)
     _, f_ext = os.path.splitext(form_picture.filename)
     picture_fn = random_hex + f_ext
-    picture_path = os.path.join(app.root_path, 'static/images', picture_fn)
+    picture_path = os.path.join(app.root_path, 'images', picture_fn)
     output_size = (400, 500)
     i = Image.open(form_picture)
     i.thumbnail(output_size)
     i.save(picture_path)
 
     return picture_fn
-"""
 
-@app.route('/post', methods=['GET', 'POST'])
+
+@app.route('/uploadImage', methods=['GET', 'POST'])
 @login_required
-def post():
+def upload_image():
     followers = 0
     if request.files:
         file = request.files.get("imageToUpload", "")
-        image_name = file.filename
-        path = os.path.join(IMAGES_DIR, image_name)
-        file.save(path)
         caption = request.form["caption"]
-        #path = savePhoto(file)
+        path = savePhoto(file)
         username = session["username"]
+        
         if (request.form["allFollowers"] == "True"):
             followers = 1
-        print('3')
         query = "INSERT INTO Photo (postingDate, filePath, allFollowers, caption, poster) VALUES (%s, %s, %s, %s, %s)"
-        with conn.cursor() as cursor:
-            cursor.execute(query, (time.strftime('%Y-%m-%d %H:%M:%S'), path, followers, caption, username))
-            print('4')
+        print(query, (time.strftime('%Y-%m-%d %H:%M:%S'), path, followers, caption, username))
+        conn.cursor().execute(query, (time.strftime('%Y-%m-%d %H:%M:%S'), path, followers, caption, username))
+        conn.commit()
         message = "Success!"
         return render_template('upload.html',message = message)
     else:
@@ -175,10 +172,9 @@ def images():
     cursor.execute(query, (username, username, username, username, username))
     data = cursor.fetchall()
     for post in data:  # post is a dictionary within a list of dictionaries for all the photos
-        query = 'SELECT username, firstName, lastName FROM Tag NATURAL JOIN Person WHERE pID = %s'
+        query = 'SELECT username, firstName, lastName FROM Person NATURAL JOIN Tag WHERE pID = %s'
         cursor.execute(query, (post['pID']))
         result = cursor.fetchall()
-        print('hello')
         if (result):
             post['tagees'] = result
         query = 'SELECT firstName, lastName FROM Person WHERE username = %s'
@@ -273,16 +269,13 @@ def manageRequests():
 @app.route("/createFriendGroup", methods=["GET", "POST"])
 @login_required
 def createFriendGroup():
-   print('FIRST')
    if request.form:
-       print('SECOND')
        groupName = request.form["groupName"]
        description = request.form["description"]
        cursor = conn.cursor()
        query = "SELECT * FROM FriendGroup WHERE groupCreator = %s\
        AND groupName = %s"
        cursor.execute(query, (session["username"], groupName))
-       print('THIRD')
        data = cursor.fetchone()
        if data: # bad, return error message
            error = f"You already have a friend group called {groupName}"

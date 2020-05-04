@@ -1,15 +1,40 @@
+
 <html>
     <head>
         <title>Finstagram</title>
+        <style>
+            .imageContainer {
+                display: inline-block;
+            }
+        </style>
     </head>
     <body>
         <h1>Image Gallery</h1>
         <div>
-            {% for image in images %}
-
-            <img src="/image/{{image.filePath}}" width="300"/>
-            {% endfor %}
         </div>
+        {% if posts %}
+         {% for post in posts %}
+         <div>
+            <p>Posted By <b>{{post.firstName}} {{post.lastName}} - {{post.poster}}</b></p>
+            <small class=text-muted> Photo ID: {{post.pID}}</small> <br>
+            <small class=text-muted> Posted On {{post.postingDate}}</small> <br>
+            <img src="images/{{post.path}}"> <br>
+            <p> {{post.caption}} </p>
+          
+            <br>
+        
+            </p>
+            </p>
+             <p>_______________________________________________________</p>
+        </div>
+        {% endfor %}
+        {% else %}
+            <p>No photos to display</p>
+        {% endif %}
+
+
         <a href="/">Go back</a>
     </body>
+
 </html>
+
