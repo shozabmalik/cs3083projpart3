@@ -1,0 +1,11 @@
+1) The extra feature called the reactTo function would allow users to react to images posted by other people. It would just have an insert statement with would look something like this:
+ins = "INSERT INTO ReactTo (username, pID, reactionTime, comment, emoji) values (%s, %s, %s, %s, %s)"
+with connection.cursor() as cursor:
+	 cursor.execute(ins,(username, pID, time.strftime('%Y-%m-%d %H:%M:%S'), comment, emoji))
+This would be a POST method and have a URL of /reactTo.
+
+2) The other extra feature called the searchByTag function would allow users to search a photo by a specific person that was tagged in the photo. The query would look something like this:
+with connection.cursor() as cursor:
+	query = “SELECT pID FROM Photo NATURAL JOIN Tag WHERE username = %s”
+	cursor.execute(query, username)
+This would be a GET method and have a URL of /searchByTag.
