@@ -30,34 +30,24 @@ def login_required(par):
         return par(*args, **kwargs)
     return d
 
-
-
 @app.route('/')
 def index():
     if ("username" in session):
         return redirect(url_for("home"))
     return render_template("index.html")
 
-
-
 @app.route("/home")
 @login_required
 def home():
     return render_template("home.html", username=session['username'])
 
-
-
-@app.route('/login')#, methods=['GET'])
+@app.route('/login')
 def login():
     return render_template('login.html')
 
-
-
-@app.route('/register')#, methods=['GET'])
+@app.route('/register')
 def register():
     return render_template('register.html')
-
-
 
 @app.route('/loginAuth', methods=['GET', 'POST'])
 def loginAuth():
@@ -79,7 +69,7 @@ def loginAuth():
         else:
             error = 'login or username is invalid'
             return render_template('login.html', error=error)
-    error = "Unkown error. Try again."
+    error = "Unknown error. Try again."
     return render_template("login.html", error=error)
 
 @app.route('/registerAuth', methods=['GET', 'POST'])
@@ -91,8 +81,6 @@ def registerAuth():
     firstName = request.form['firstName']
     lastName = request.form['lastName']
     email = request.form['email']
-
-
     cursor = conn.cursor()
     query = 'SELECT * FROM Person WHERE username = %s'
     cursor.execute(query, (username))
@@ -108,7 +96,6 @@ def registerAuth():
         cursor.close()
         return render_template('index.html')
 
-
 def savePhoto(form_picture):
     random_hex = secrets.token_hex(8)
     _, f_ext = os.path.splitext(form_picture.filename)
@@ -120,7 +107,6 @@ def savePhoto(form_picture):
     i.save(picture_path)
 
     return picture_fn
-
 
 @app.route('/uploadImage', methods=['GET', 'POST'])
 @login_required
@@ -153,13 +139,10 @@ def upload():
     username = session["username"]
     return render_template("upload.html", username=username)
 
-
 @app.route('/logout')
 def logout():
     session.pop('username')
     return redirect('/')
-
-
 
 @app.route('/images', methods=["GET"])
 @login_required
@@ -172,11 +155,10 @@ def images():
     data = cursor.fetchone()
     firstName = data["firstName"]
     lastName = data["lastName"]
-    # get the photos visible to the username
     query = 'SELECT pID,postingDate,filePath,caption,poster FROM Photo WHERE poster = %s OR pID IN (SELECT pID FROM Photo WHERE poster != %s AND allFollowers = 1 AND poster IN (SELECT followee FROM Follow WHERE follower = %s AND followee = poster AND followStatus = 1)) OR pID IN (SELECT pID FROM SharedWith NATURAL JOIN BelongTo NATURAL JOIN Photo WHERE username = %s AND poster != %s) ORDER BY postingDate DESC'
     cursor.execute(query, (username, username, username, username, username))
     data = cursor.fetchall()
-    for post in data:  # post is a dictionary within a list of dictionaries for all the photos
+    for post in data:
         query = 'SELECT username, firstName, lastName FROM Person NATURAL JOIN Tag WHERE pID = %s'
         cursor.execute(query, (post['pID']))
         result = cursor.fetchall()
@@ -197,19 +179,6 @@ def image(image_name):
     if os.path.isfile(location):
         return send_file(location, mimetype="image/jpg")
 
-
-""" @app.route("/react", methods=["POST"])
-@login_required
-def react():
-    username = session["username"]
-    #query = "INSERT IGNORE INTO Likes (username, photoID, liketime) values (%s, %s, %s)"
-    query = "INSERT INTO ReactTo(username, pID, reactionTime, emoji) values (%s, %s, %s)"
-    pID = request.form["pID"]
-    with conn.cursor() as cursor:
-        cursor.execute(query,(username, pID, time.strftime('%Y-%m-%d %H:%M:%S')))
-    return render_template("images.html") """
-
-
 @app.route("/follow", methods=["GET", "POST"])
 @login_required
 def follow():
@@ -221,6 +190,9 @@ def follow():
        data = cursor.fetchone()
        error = None
        if (data): 
+           if (session['username'] == toBeFollowed):
+               error = "You cannot follow yourself"
+               return render_template("follow.html", message = error)
            query = "SELECT * FROM Follow WHERE followee = %s AND follower = %s"
            cursor.execute(query, (toBeFollowed, session['username']))
            data = cursor.fetchone()
@@ -242,7 +214,6 @@ def follow():
        cursor.close()
        return render_template('follow.html', message = error)
     return render_template('follow.html')
-
 
 @app.route("/manageRequests", methods=["GET","POST"])
 @login_required
@@ -269,7 +240,6 @@ def manageRequests():
        return redirect(url_for("manageRequests"))
    cursor.close()
    return render_template("manageRequests.html", followers = data)
-
 
 @app.route("/createFriendGroup", methods=["GET", "POST"])
 @login_required
@@ -314,8 +284,9 @@ def add_user():
     with conn.cursor() as cursor:    
         cursor.execute(groupsQuery, username)
         groups = cursor.fetchall()
-    #groups = request.form.getlist("groups[]")
-    print(groups)
+    #for group in groups:
+     #   for value in group.values():
+            #print(value)
     userQuery = "SELECT * FROM Person WHERE username = %s"
     addToQuery = "INSERT INTO BelongTo VALUES (%s, %s, %s)"
     with conn.cursor() as cursor:
@@ -345,7 +316,6 @@ def searchPoster():
     return render_template("searchPoster.html")
 
 
-# CODE FOR SEARCH BY POSTER
 @app.route("/searchAuth", methods=["POST"])
 def searchAuth():
     if request.form:
@@ -363,7 +333,6 @@ def searchAuth():
         return render_template("searchPoster.html", error=error)
     error = "An unknown error has occurred. Please try again."
     return render_template("searchPoster.html", error=error)
-
 
 if __name__ == "__main__":
     app.run('127.0.0.1', 5000, debug=True)
