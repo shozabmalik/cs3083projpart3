@@ -90,6 +90,8 @@ def registerAuth():
     checksumPassword = hashlib.sha256(newPassword.encode("utf-8")).hexdigest()
     firstName = request.form['firstName']
     lastName = request.form['lastName']
+    email = request.form['email']
+
 
     cursor = conn.cursor()
     query = 'SELECT * FROM Person WHERE username = %s'
@@ -100,8 +102,8 @@ def registerAuth():
         error = "This user already exists"
         return render_template('register.html', error = error)
     else:
-        ins = "INSERT INTO Person (username, password, firstName, lastName) VALUES (%s, %s, %s, %s)"
-        cursor.execute(ins, (username, checksumPassword, firstName, lastName))
+        ins = "INSERT INTO Person (username, password, firstName, lastName, email) VALUES (%s, %s, %s, %s, %s)"
+        cursor.execute(ins, (username, checksumPassword, firstName, lastName, email))
         conn.commit()
         cursor.close()
         return render_template('index.html')
@@ -130,8 +132,11 @@ def upload_image():
         path = savePhoto(file)
         username = session["username"]
         
-        if (request.form["allFollowers"] == "True"):
+        try:
+            (request.form["allFollowers"] == "True")
             followers = 1
+        except KeyError:
+            followers = 0
         query = "INSERT INTO Photo (postingDate, filePath, allFollowers, caption, poster) VALUES (%s, %s, %s, %s, %s)"
         print(query, (time.strftime('%Y-%m-%d %H:%M:%S'), path, followers, caption, username))
         conn.cursor().execute(query, (time.strftime('%Y-%m-%d %H:%M:%S'), path, followers, caption, username))
@@ -193,7 +198,7 @@ def image(image_name):
         return send_file(location, mimetype="image/jpg")
 
 
-@app.route("/react", methods=["POST"])
+""" @app.route("/react", methods=["POST"])
 @login_required
 def react():
     username = session["username"]
@@ -202,22 +207,22 @@ def react():
     pID = request.form["pID"]
     with conn.cursor() as cursor:
         cursor.execute(query,(username, pID, time.strftime('%Y-%m-%d %H:%M:%S')))
-    return render_template("images.html")
+    return render_template("images.html") """
 
 
 @app.route("/follow", methods=["GET", "POST"])
 @login_required
 def follow():
     if request.form:
-       username = request.form['username']
+       toBeFollowed = request.form['username']
        cursor = conn.cursor()
        query = 'SELECT * FROM Person WHERE username = %s'
-       cursor.execute(query, (username))
+       cursor.execute(query, (toBeFollowed))
        data = cursor.fetchone()
        error = None
        if (data): 
            query = "SELECT * FROM Follow WHERE followee = %s AND follower = %s"
-           cursor.execute(query, (username, session['username']))
+           cursor.execute(query, (toBeFollowed, session['username']))
            data = cursor.fetchone()
            if (data):
                if (data["followStatus"] == 1):
@@ -228,7 +233,7 @@ def follow():
            else:
                query = "INSERT INTO Follow VALUES(%s, %s, 0)"
                conn.commit()
-               cursor.execute(query, (username, session['username']))
+               cursor.execute(query, (session['username'], toBeFollowed))
                message = "Successfully sent follow request"
                return render_template("follow.html", message = message)
        else:
@@ -293,11 +298,10 @@ def createFriendGroup():
 @login_required
 def friend_groups():
     username = session["username"]
-    query = "SELECT DISTINCT username, groupName FROM BelongTo WHERE username = %s OR username = %s"
+    query = "SELECT DISTINCT groupName FROM FriendGroup WHERE groupCreator = %s"# OR username = %s"
     with conn.cursor() as cursor:
-        cursor.execute(query, (username, username))
-    data = cursor.fetchall()
-
+        cursor.execute(query, (username))
+        data = cursor.fetchall()
     return render_template("groups.html", groups=data)
 
 
@@ -305,9 +309,13 @@ def friend_groups():
 @login_required
 def add_user():
     username = session["username"]
-    userToAdd = request.form["userToAdd"]
-    groups = request.form.getlist("groups[]")
-    # print(groups)
+    userToAdd = request.form["userAdded"]
+    groupsQuery = 'SELECT groupName FROM FriendGroup WHERE groupCreator = %s'
+    with conn.cursor() as cursor:    
+        cursor.execute(groupsQuery, username)
+        groups = cursor.fetchall()
+    #groups = request.form.getlist("groups[]")
+    print(groups)
     userQuery = "SELECT * FROM Person WHERE username = %s"
     addToQuery = "INSERT INTO BelongTo VALUES (%s, %s, %s)"
     with conn.cursor() as cursor:
@@ -322,7 +330,7 @@ def add_user():
         try:
             print("trying")
             with conn.cursor() as cursor:
-                cursor.execute(addToQuery, (userToAdd, username, groups[0]))
+                cursor.execute(addToQuery, (userToAdd, groups[0], username))
             message = "User successfully added to selected group"
             return message
             #return render_template("groups.html", message=message)
