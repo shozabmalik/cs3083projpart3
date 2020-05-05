@@ -3,14 +3,13 @@
         <ul style="list-style: none;">
         {% for group in groups %}
             
-            <li><input type = "checkbox" name = "check">{{group.groupName}}</li>
+            <li><input type = "checkbox" name = "check" value = "true" >{{group.groupName}}</li>
             
         {% endfor %}
         </ul>
         <form action="/addToGroup" method = "post">
             <input type="text" name ="userAdded"> <input type="submit" value="Add User">
-        <!-- <input type="text" id="userAdded"><input type="button" value="Add User" onClick="addUser(this)"> -->
-        <!--<input type="text" id="userAdded"><input type="button" value="Add User" onClick="addUser(this)"><span id="errorMsg"></span>-->
+        
         </form>
         <br/>
         {% if message %}
